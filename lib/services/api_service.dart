@@ -121,9 +121,9 @@ class ApiService {
 
   static Future<String> isArtPromptApi(
       {required List<ChatModel> messages, required String message}) async {
-    message = 'Please create a unicorn image for me ';
-
-    messages.add(ChatModel(msg: message, chatIndex: 'user'));
+    print('messages: ${messages}');
+    print('message: ${message}');
+    // messages.add(ChatModel(msg: message, chatIndex: 'user'));
     try {
       final res = await http.post(Uri.parse('$BASE_URL/chat/completions'),
           headers: {
@@ -146,6 +146,7 @@ class ApiService {
             jsonDecode(res.body)['choices'][0]['message']['content'];
 
         content = content.trim();
+        print('content: ${content}');
 
         switch (content) {
           case 'Yes':

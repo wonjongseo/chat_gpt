@@ -47,8 +47,9 @@ class VoiceService {
     await speechToText.stop();
   }
 
-  String onSpeechResult(SpeechRecognitionResult result) {
+  void onSpeechResult(SpeechRecognitionResult result) {
     log('onSpeechResult');
-    return result.recognizedWords;
+    log('result.recognizedWords : ${result.recognizedWords}');
+    lastWords = result.recognizedWords;
   }
 }

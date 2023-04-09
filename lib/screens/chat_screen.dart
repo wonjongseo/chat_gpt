@@ -135,6 +135,12 @@ class _ChatSceenState extends State<ChatSceen> {
                               ));
                               return;
                             }
+                            if (voiceService.speechToText.isNotListening) {
+                              setState(() {
+                                _isLisitening = false;
+                                return;
+                              });
+                            }
                             if (await voiceService.speechToText.hasPermission &&
                                 voiceService.speechToText.isNotListening) {
                               setState(() {
@@ -151,10 +157,17 @@ class _ChatSceenState extends State<ChatSceen> {
                               setState(() {
                                 _isTyping = true;
                               });
+                              print(
+                                  'voiceService.lastWords: ${voiceService.lastWords}');
 
-                              await ApiService.isArtPromptApi(
-                                  message: voiceService.lastWords,
-                                  messages: chatProvider.getChatList);
+                              await chatProvider.sendMessageAndGetAnswer(
+                                chosenModelId: '',
+                                message: voiceService.lastWords,
+                                isSpeak: true,
+                              );
+                              // await ApiService.isArtPromptApi(
+                              //     message: voiceService.lastWords,
+                              //     messages: chatProvider.getChatList);
 
                               setState(() {
                                 _isTyping = false;
@@ -217,7 +230,7 @@ class _ChatSceenState extends State<ChatSceen> {
     try {
       setState(() {
         _isTyping = true;
-        chatProvider.addUserMessage(message: message);
+        // chatProvider.addUserMessage(message: message);
 
         textEditingController.clear();
         focusNode.unfocus();

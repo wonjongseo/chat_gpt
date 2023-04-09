@@ -18,6 +18,7 @@ class ChatProvider extends ChangeNotifier {
     required String chosenModelId,
     bool isSpeak = false,
   }) async {
+    addUserMessage(message: message);
     if (isSpeak) {
       await ApiService.isArtPromptApi(messages: chatList, message: message);
     } else if (chosenModelId.toLowerCase().startsWith("gpt")) {
