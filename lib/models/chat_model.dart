@@ -3,8 +3,8 @@ enum CHAT_INDEX { USER, AI }
 class ChatModel {
   final String msg;
   final String chatIndex;
-
-  ChatModel({required this.msg, required this.chatIndex});
+  bool? isImage = false;
+  ChatModel({required this.msg, required this.chatIndex, this.isImage});
 
   factory ChatModel.fromJson(Map<String, dynamic> json) => ChatModel(
         msg: json['msg'],
@@ -21,6 +21,6 @@ class ChatModel {
 
   @override
   String toString() {
-    return 'ChatModel(msg: $msg, chatIndex: $chatIndex)';
+    return 'ChatModel(msg: $msg, isImage: $isImage, chatIndex: $chatIndex)';
   }
 }

@@ -74,7 +74,6 @@ class ApiService {
     }
   }
 
-  // Send Message fct
   static Future<String> sendMessage({
     required List<ChatModel> messages,
     required String message,
@@ -97,16 +96,13 @@ class ApiService {
           },
         ),
       );
-      // Map jsonResponse = jsonDecode(response.body);
 
       Map jsonResponse = json.decode(utf8.decode(response.bodyBytes));
       if (jsonResponse['error'] != null) {
-        // print("jsonResponse['error'] ${jsonResponse['error']["message"]}");
         throw HttpException(jsonResponse['error']["message"]);
       }
       if (jsonResponse["choices"].length > 0) {
         String content = jsonResponse["choices"][0]['text'];
-        // log("jsonResponse[choices]text ${jsonResponse["choices"][0]["text"]}");
 
         content = content.trim();
 
@@ -123,11 +119,9 @@ class ApiService {
 
   // For the user's Voice
 
-  Future<String> isArtPromptApi(
+  static Future<String> isArtPromptApi(
       {required List<ChatModel> messages, required String message}) async {
-    print('message: ${message}');
-    message = 'What is the Flutter ? ';
-    print('message: ${message}');
+    message = 'Please create a unicorn image for me ';
 
     messages.add(ChatModel(msg: message, chatIndex: 'user'));
     try {
@@ -150,18 +144,16 @@ class ApiService {
       if (res.statusCode == 200) {
         String content =
             jsonDecode(res.body)['choices'][0]['message']['content'];
-        print('content: ${content}');
-        ;
 
         content = content.trim();
 
         switch (content) {
-          // case 'Yes':
-          // case 'yes':
-          // case 'Yes.':
-          // case 'yes.':
-          //   // final res = await dallEApi(message);
-          //   return res;
+          case 'Yes':
+          case 'yes':
+          case 'Yes.':
+          case 'yes.':
+            final res = await _dallEApi(message: message, messages: messages);
+            return res;
 
           default:
             final res = await sendMessageGPT(
@@ -176,78 +168,32 @@ class ApiService {
     }
   }
 
-  // Future<String> chatGpiApi(String prompt) async {
-  //   messages.add({
-  //     'role': 'user',
-  //     'content': prompt,
-  //   });
-  //   try {
-  //     final res = await http.post(Uri.parse('$BASE_URL/chat/completions'),
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           'Authorization': 'Bearer $API_KEY'
-  //         },
-  //         body: jsonEncode({
-  //           "model": "gpt-3.5-turbo",
-  //           'messages': messages,
-  //         }));
+  static Future<String> _dallEApi(
+      {required List<ChatModel> messages, required String message}) async {
+    try {
+      final res = await http.post(Uri.parse('$BASE_URL/images/generations'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $API_KEY'
+          },
+          body: jsonEncode({
+            'prompt': message,
+            'n': 1,
+          }));
 
-  //     if (res.statusCode == 200) {
-  //       print('res.body: ${res.body}');
+      if (res.statusCode == 200) {
+        String imageUrl = jsonDecode(res.body)['data'][0]['url'];
 
-  //       String content =
-  //           jsonDecode(res.body)['choices'][0]['message']['content'];
+        imageUrl = imageUrl.trim();
+        messages.add(
+            ChatModel(msg: imageUrl, chatIndex: 'assistant', isImage: true));
 
-  //       content = content.trim();
+        return imageUrl;
+      }
 
-  //       messages.add({
-  //         'role': 'assistant',
-  //         'content': content,
-  //       });
-
-  //       return content;
-  //     }
-
-  //     return 'An Internal error occurred.';
-  //   } catch (e) {
-  //     return e.toString();
-  //   }
-  // }
-
-  // Future<String> dallEApi(String prompt) async {
-  //   messages.add({
-  //     'role': 'user',
-  //     'content': prompt,
-  //   });
-  //   try {
-  //     final res = await http.post(Uri.parse(_dallEUrl),
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           'Authorization': 'Bearer $secretApiKey'
-  //         },
-  //         body: jsonEncode({
-  //           'prompt': prompt,
-  //           'n': 1,
-  //         }));
-
-  //     if (res.statusCode == 200) {
-  //       print('res.body: ${res.body}');
-
-  //       String imageUrl = jsonDecode(res.body)['data'][0]['url'];
-
-  //       imageUrl = imageUrl.trim();
-
-  //       messages.add({
-  //         'role': 'assistant',
-  //         'content': imageUrl,
-  //       });
-
-  //       return imageUrl;
-  //     }
-
-  //     return 'An Internal error occurred.';
-  //   } catch (e) {
-  //     return e.toString();
-  //   }
-  // }
+      return 'An Internal error occurred.';
+    } catch (e) {
+      return e.toString();
+    }
+  }
 }

@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:chat_gpt/constants/constant.dart';
-import 'package:chat_gpt/models/chat_model.dart';
 import 'package:chat_gpt/providers/chats_provider.dart';
 import 'package:chat_gpt/providers/models_provider.dart';
 import 'package:chat_gpt/screens/services.dart';
@@ -10,8 +9,6 @@ import 'package:chat_gpt/services/assets_manager.dart';
 import 'package:chat_gpt/services/voice_service.dart';
 import 'package:chat_gpt/widgets/chat_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 
@@ -28,16 +25,13 @@ class _ChatSceenState extends State<ChatSceen> {
   late TextEditingController textEditingController;
   late ScrollController _listScrollController;
   late FocusNode focusNode;
-
   late VoiceService voiceService;
-
   @override
   void initState() {
     _listScrollController = ScrollController();
     textEditingController = TextEditingController();
     focusNode = FocusNode();
     voiceService = VoiceService();
-
     super.initState();
   }
 
@@ -49,12 +43,11 @@ class _ChatSceenState extends State<ChatSceen> {
     super.dispose();
   }
 
-  // List<ChatModel> chatList = [];
-
   @override
   Widget build(BuildContext context) {
     final modelsProvider = Provider.of<ModelsProvider>(context);
     final chatProvider = Provider.of<ChatProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
@@ -81,8 +74,7 @@ class _ChatSceenState extends State<ChatSceen> {
                 itemCount: chatProvider.getChatList.length,
                 itemBuilder: (context, index) {
                   return ChatWidget(
-                    msg: chatProvider.getChatList[index].msg,
-                    chatIndex: chatProvider.getChatList[index].chatIndex,
+                    chatModel: chatProvider.getChatList[index],
                   );
                 },
               ),
@@ -132,26 +124,48 @@ class _ChatSceenState extends State<ChatSceen> {
                           ),
                         ),
                         IconButton(
+                          //  _isLisitening 말하고 있다면
                           onPressed: () async {
-                            setState(() {
-                              print('_isLisitening = true');
-                              _isLisitening = true;
-                            });
+                            if (_isTyping && !_isLisitening) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content:
+                                    TextWidget(label: 'Please Wait a Minute.'),
+                                backgroundColor: Colors.red,
+                              ));
+                              return;
+                            }
+                            if (await voiceService.speechToText.hasPermission &&
+                                voiceService.speechToText.isNotListening) {
+                              setState(() {
+                                _isLisitening = true;
+                              });
 
-                            await Future.delayed(Duration(seconds: 2));
+                              await voiceService.startListening();
+                            } else if (voiceService.speechToText.isListening) {
+                              setState(() {
+                                _isLisitening = false;
+                              });
+                              await voiceService.stopListening();
 
-                            print('onClickMic');
+                              setState(() {
+                                _isTyping = true;
+                              });
 
-                            await voiceService.onMicPress(
-                              messages: chatProvider.chatList,
-                              isLisitening: _isLisitening,
-                            );
-                            setState(() {
-                              print('_isLisitening = false');
-                              _isLisitening = false;
-                            });
+                              await ApiService.isArtPromptApi(
+                                  message: voiceService.lastWords,
+                                  messages: chatProvider.getChatList);
+
+                              setState(() {
+                                _isTyping = false;
+                              });
+                            } else {
+                              await voiceService.initSpeechToText();
+                            }
+
+                            setState(() {});
                           },
-                          icon: _isLisitening == true
+                          icon: _isLisitening
                               ? const Icon(
                                   Icons.stop,
                                   color: Colors.red,
@@ -203,7 +217,6 @@ class _ChatSceenState extends State<ChatSceen> {
     try {
       setState(() {
         _isTyping = true;
-        // chatList.add(ChatModel(msg: message, chatIndex: 0));
         chatProvider.addUserMessage(message: message);
 
         textEditingController.clear();

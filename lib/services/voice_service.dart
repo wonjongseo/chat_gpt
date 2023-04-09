@@ -1,15 +1,14 @@
 import 'dart:developer';
 
-import 'package:chat_gpt/models/chat_model.dart';
 import 'package:chat_gpt/services/api_service.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-class VoiceService extends ChangeNotifier {
+class VoiceService {
   late SpeechToText speechToText;
   late FlutterTts textToSpeech;
+  bool isSpeeking = false;
   late ApiService apiService;
 
   String lastWords = '';
@@ -32,31 +31,6 @@ class VoiceService extends ChangeNotifier {
     await textToSpeech.speak(content);
   }
 
-  Future<void> onMicPress(
-      {required List<ChatModel> messages, required bool isLisitening}) async {
-    if (!isLisitening) {
-      // if (await speechToText.hasPermission && speechToText.isNotListening) {
-      await startListening();
-      // } else if (speechToText.isListening) {
-    } else if (isLisitening) {
-      final speech = await apiService.isArtPromptApi(
-          messages: messages, message: lastWords);
-      print('speech: ${speech}');
-      if (speech.contains('http')) {
-        generatedImageUrl = speech;
-        generatedContent = null;
-      } else {
-        generatedContent = speech;
-        generatedImageUrl = null;
-
-        // await systemSpeak(speech);
-      }
-      await stopListening();
-    } else {
-      await initSpeechToText();
-    }
-  }
-
   Future<void> initSpeechToText() async {
     log('initSpeechToText');
     speechToText = SpeechToText();
@@ -75,7 +49,6 @@ class VoiceService extends ChangeNotifier {
 
   String onSpeechResult(SpeechRecognitionResult result) {
     log('onSpeechResult');
-    print('result.recognizedWords: ${result.recognizedWords}');
     return result.recognizedWords;
   }
 }

@@ -16,8 +16,11 @@ class ChatProvider extends ChangeNotifier {
   Future<void> sendMessageAndGetAnswer({
     required String message,
     required String chosenModelId,
+    bool isSpeak = false,
   }) async {
-    if (chosenModelId.toLowerCase().startsWith("gpt")) {
+    if (isSpeak) {
+      await ApiService.isArtPromptApi(messages: chatList, message: message);
+    } else if (chosenModelId.toLowerCase().startsWith("gpt")) {
       await ApiService.sendMessageGPT(
         messages: chatList,
         message: message,
